@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "LVMI_lab"
+version = "0.1.0"
+description = ""
+authors = ["Nick Konidaris <npk@carnegiescience.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.20.1"
+astropy = "^4.2"
+scipy = "^1.6.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
