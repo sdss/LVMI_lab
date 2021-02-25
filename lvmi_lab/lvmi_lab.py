@@ -131,6 +131,25 @@ def sincshift2d(image, dx, dy, sincrad=10, dampfac=3.25):
 
 def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     """ Cross correlation - ascent algorithm - helper function 
+    
+    This bit uses an "ascent" algorithm to find the maximum.
+    
+    args:
+        ijd: i, j, data
+            data is a dictionary that contains all the key local 
+            variables from the xcor_frames function
+        threshold: Threshold value for minimum improvement 
+        iter_max: Maximum number of iterations to allow in the
+            ascent algorithm
+    
+    Returns a tuple with:
+        i,j: Sames are input
+        (best i, best j): Best location in the ascent space 
+            for cross correlation
+        res[subsample, subsample]: Resulting sparsley populated 2d array
+        shiftsize: Same as input
+        Warnings: String of any warnings. Contains "Success"
+            on success.
     """
 
     i,j,data = ijd
