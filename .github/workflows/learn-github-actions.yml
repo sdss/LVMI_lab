@@ -8,4 +8,4 @@ jobs:
       - uses: actions/setup-python@v2
       - uses: snok/install-poetry@v1.1.2
 
-      - run: poetry --version
+      - run: poetry run pytest
