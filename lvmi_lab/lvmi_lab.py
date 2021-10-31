@@ -189,15 +189,13 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
         prev = res[start_i,start_j]
         niter += 1
     
+
     if niter >= iter_max:
         return (i,j,np.array((start_i,start_j)),res,shiftsize,"Exceeded iteration limit")
 
-    sl = slice(start_i-1,start_i+2)
-    xcom = np.nansum(res[sl,j] * shiftsize[sl])/np.sum(res[sl,j])
-    ycom = np.nansum(res[sl,j] * shiftsize[sl])/np.sum(res[sl,j])
     sl = slice(start_j-1,start_j+2)
-    xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.sum(res[start_i,sl])
-    ycom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.sum(res[start_i,sl])
+    xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
+    ycom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
     
     return (i,j,np.array((xcom,ycom)),res,shiftsize,"Success")
 
@@ -275,7 +273,7 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
         y_shifts[r[0],r[1]] = r[2][1]
 
 
-    #from IPython import embed; embed()
+    from IPython import embed; embed()
 
     return x_shifts, y_shifts, Warnings
 
