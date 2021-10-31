@@ -24,4 +24,16 @@ if __name__ == "__main__":
     hdu2 = fits.open(args.file2[0])
 
     res = xcor_frames(hdu1[0].data, hdu2[0].data)
-    print(res)
+    x,y,err = res
+
+    print(err)
+    conv = 12/.2 # micron / pix
+    x *= conv
+    y *= conv
+    print("X Array [µm]")
+    print(np.array_str(x, precision=2))
+    print("Y Array [µm]")
+    print(np.array_str(y, precision=2))
+
+    print(" X: %3.2f µm Y: %3.2f µm" % (np.nanmedian(x), np.nanmedian(y)))
+
