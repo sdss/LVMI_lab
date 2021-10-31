@@ -197,6 +197,8 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
     ycom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
     
+
+
     return (i,j,np.array((xcom,ycom)),res,shiftsize,"Success")
 
 def xcor_frames_helper(ijd):
@@ -243,16 +245,17 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
 
 """
 
-    run = A.shape[0]//cut_into
+    run = A.shape[0]//cut_into+1
     res = np.zeros((run, run, subsample, subsample))
 
     
     dat = {"A": A, "B": B, "pm_pixels": pm_pixels, "subsample": subsample, \
         "cut_into": cut_into}
 
+    #res = list(map(xcor_frames_ascent_helper, todo))
+
     todo = [(i,j,dat) for i in range(run) for j in range(run)]
     p = Pool()
-    #res = list(map(xcor_frames_ascent_helper, todo))
     res = p.map(xcor_frames_ascent_helper, todo)
     p.close()
 
@@ -267,13 +270,13 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
 
     Warnings = ""
     for r in res:
-        if r[5] != "Success": 
-            Warnings = "%s\n%s" % (Warnings, r[5])
         x_shifts[r[0],r[1]] = r[2][0]
         y_shifts[r[0],r[1]] = r[2][1]
+        if r[5] != "Success": 
+            Warnings = "%s\n%s" % (Warnings, r[5])
+            x_shifts[r[0],r[1]] = np.nan
+            y_shifts[r[0],r[1]] = np.nan
 
-
-    from IPython import embed; embed()
 
     return x_shifts, y_shifts, Warnings
 
