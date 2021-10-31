@@ -42,7 +42,7 @@ def subtract_overscan(dat):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Bias subtract LVM data')
-    parser.add_argument('files', type=str, nargs=1, help="File name")
+    parser.add_argument('files', type=str, nargs="*", help="File name")
     parser.add_argument('--no_overwrite', action='store_false', help="Do not overwrite files")
     parser.add_argument('--prefix', default="bs_", help="Prefix on output")
 
@@ -57,6 +57,7 @@ if __name__ == "__main__":
         hdus = fits.open(file)
         dat = hdus[0].data
         res = subtract_overscan(dat)
+        hdus[0].data = res
+        hdus[0].header["DEBIAS"] = ("Yes", "Frame was debiased")
 
-        out = fits.PrimaryHDU(floatcompress(res))
-        out.writeto(args.prefix + file.rstrip(".gz"), overwrite=overwrite)
+        hdus.writeto(args.prefix + file.rstrip(".gz"), overwrite=overwrite)
