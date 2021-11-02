@@ -1,9 +1,10 @@
 #!/usr/bin/env python 
 
-from lvmi_lab import xcor_frames
-import numpy as np
-from astropy.io import fits
 import argparse
+import numpy as np
+
+from lvmi_lab import xcor_frames
+from astropy.io import fits
 
 
 
