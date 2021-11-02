@@ -165,6 +165,7 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     res[:] = np.nan
 
     start_i,start_j= subsample//2, subsample//2
+    start_i -= 20
 
     prev = 0
     improvement = np.inf
@@ -172,12 +173,12 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     while (improvement > threshold) and (niter < iter_max):
         for di in [-1,0,1]:
             for dj in [-1,0,1]:
-                ix = di + 1 + start_i
-                jx = dj + 1 + start_j
+                ix = di + start_i
+                jx = dj + start_j
                 try: 
                     if not np.isfinite(res[ix,jx]):
                         a = shift_frame(A[sl], shiftsize[ix], shiftsize[jx])
-                        xcor = np.sum(a*B[sl])
+                        xcor = np.mean(a*B[sl])
                         res[ix, jx] = xcor
                 except IndexError:
                     return (i,j,np.array((start_i,start_j)),res,shiftsize,"Hit Edge")
@@ -195,10 +196,9 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
 
     sl = slice(start_j-1,start_j+2)
     xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
-    ycom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
+    sl = slice(start_i-1,start_i+2)
+    ycom = np.nansum(res[sl,start_j] * shiftsize[sl])/np.nansum(res[sl,start_j])
     
-
-
     return (i,j,np.array((xcom,ycom)),res,shiftsize,"Success")
 
 def xcor_frames_helper(ijd):
@@ -252,9 +252,10 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
     dat = {"A": A, "B": B, "pm_pixels": pm_pixels, "subsample": subsample, \
         "cut_into": cut_into}
 
-    #res = list(map(xcor_frames_ascent_helper, todo))
 
     todo = [(i,j,dat) for i in range(run) for j in range(run)]
+    #res = list(map(xcor_frames_ascent_helper, todo))
+    #res = xcor_frames_ascent_helper((3,3,dat))
     p = Pool()
     res = p.map(xcor_frames_ascent_helper, todo)
     p.close()
