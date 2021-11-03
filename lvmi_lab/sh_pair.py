@@ -24,6 +24,11 @@ if __name__ == "__main__":
     hdu1 = fits.open(args.file1[0])
     hdu2 = fits.open(args.file2[0])
 
+    if hdu1[0].header["HARTMANN"] != '1 0':
+        print("LEFT IS NOT LEFT!!!")
+    if hdu2[0].header["HARTMANN"] != '0 1':
+        print("RIGHT IS NOT RIGHT")
+
     res = xcor_frames(hdu1[0].data, hdu2[0].data)
     x,y,err = res
 
