@@ -30,12 +30,18 @@ if __name__ == "__main__":
         print("RIGHT IS NOT RIGHT")
 
     res = xcor_frames(hdu1[0].data, hdu2[0].data)
-    x,y,err = res
+    #return x_shifts, y_shifts, best, Warnings
+    x,y,best,warn = res
 
-    print(err)
     conv = 12/.2 # micron / pix
     x *= conv
     y *= conv
+    print("values")
+    best /= np.nanmax(best)
+    print(np.array_str(best,precision=2))
+    bad = best < 1e-4
+    x[bad] = np.nan
+    y[bad] = np.nan
     print("X Array [µm]")
     print(np.array_str(x, precision=2))
     print("Y Array [µm]")

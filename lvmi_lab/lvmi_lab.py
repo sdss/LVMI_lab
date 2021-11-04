@@ -6,6 +6,8 @@ from scipy.signal import convolve, convolve2d
 
 from multiprocessing import Pool
 
+from pylab import *
+
 
 def generate_fake_frame(RN=3, gain=2, n_pix=4096, adc_bits=16, add=0,
     header_add={}):
@@ -128,6 +130,63 @@ def sincshift2d(image, dx, dy, sincrad=10, dampfac=3.25):
     newimage = convolve2d(image, kernel, mode='same')
     return newimage
 
+def get_slice(ijd):
+    """ Progrmmatically create slices """
+    i,j,data = ijd
+    for k,v in data.items():
+        globals()[k] = v
+
+    if not test_slit_data:
+        sl = (slice(i*cut_into, i*cut_into+cut_into), 
+            slice(j*cut_into, j*cut_into+cut_into))
+        return sl
+
+
+    """ THe following is an ugly hack to deal with test slit data """
+    qs = 4096//4
+
+    s1 = slice(150,190)
+    if (i==0) and (j==0):
+        return (s1, slice(0,qs))
+    if (i==1) and (j==0):
+        return (s1, slice(qs,2*qs))
+    if (i==2) and (j==0):
+        return (s1, slice(2*qs,3*qs))
+    if (i==3) and (j==0):
+        return (s1, slice(3*qs,4*qs))
+
+    s1 = slice(1000,1200)
+    if (i==0) and (j==1):
+        return (s1, slice(0,qs))
+    if (i==1) and (j==1):
+        return (s1, slice(qs,2*qs))
+    if (i==2) and (j==1):
+        return (s1, slice(2*qs,3*qs))
+    if (i==3) and (j==1):
+        return (s1, slice(3*qs,4*qs))
+
+
+    s1 = slice(1900,2300)
+    if (i==0) and (j==2):
+        return (s1, slice(0,qs))
+    if (i==1) and (j==2):
+        return (s1, slice(qs,2*qs))
+    if (i==2) and (j==2):
+        return (s1, slice(2*qs,3*qs))
+    if (i==3) and (j==2):
+        return (s1, slice(3*qs,4*qs))
+
+    s1 = slice(3800,4000)
+    if (i==0) and (j==3):
+        return (s1, slice(0,qs))
+    if (i==1) and (j==3):
+        return (s1, slice(qs,2*qs))
+    if (i==2) and (j==3):
+        return (s1, slice(2*qs,3*qs))
+    if (i==3) and (j==3):
+        return (s1, slice(3*qs, 4*qs))
+
+
 
 def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     """ Cross correlation - ascent algorithm - helper function 
@@ -153,11 +212,12 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     """
 
     i,j,data = ijd
-    for k,v in data.items():
-        globals()[k] = v
+    sl = get_slice(ijd)
+    #import IPython ; IPython.embed()
 
-    sl = (slice(i*cut_into, i*cut_into+cut_into), 
-            slice(j*cut_into, j*cut_into+cut_into))
+    imshow(A[sl])
+    savefig("%s%s.png" % (i,j))
+
     stepsize = pm_pixels*2/(subsample-1)
     shiftsize = np.arange(-pm_pixels, pm_pixels+stepsize, stepsize)
 
@@ -165,11 +225,11 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     res[:] = np.nan
 
     start_i,start_j= subsample//2, subsample//2
-    start_i -= 20
 
     prev = 0
     improvement = np.inf
     niter = 0
+
     while (improvement > threshold) and (niter < iter_max):
         for di in [-1,0,1]:
             for dj in [-1,0,1]:
@@ -181,7 +241,7 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
                         xcor = np.mean(a*B[sl])
                         res[ix, jx] = xcor
                 except IndexError:
-                    return (i,j,np.array((start_i,start_j)),res,shiftsize,"Hit Edge")
+                    return (i,j,ndi.center_of_mass(res),res,shiftsize,"Hit Boundary")
         
         r = np.nanargmax(res)
         start_i, start_j = np.unravel_index(r, res.shape)
@@ -192,14 +252,14 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     
 
     if niter >= iter_max:
-        return (i,j,np.array((start_i,start_j)),res,shiftsize,"Exceeded iteration limit")
+        return (i,j,ndi.center_of_mass(res),res,shiftsize,"Exceeded iteration limit")
 
     sl = slice(start_j-1,start_j+2)
     xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
     sl = slice(start_i-1,start_i+2)
     ycom = np.nansum(res[sl,start_j] * shiftsize[sl])/np.nansum(res[sl,start_j])
     
-    return (i,j,np.array((xcom,ycom)),res,shiftsize,"Success")
+    return (i,j,np.array([xcom, ycom]),res,shiftsize,"Success")
 
 def xcor_frames_helper(ijd):
 
@@ -218,6 +278,7 @@ def xcor_frames_helper(ijd):
             a = shift_frame(A[sl], sx, sy)
             res[ix,jx] = np.sum(a*B[sl])
     
+    print(ndi.center_of_mass(res))
     return (i,j,ndi.center_of_mass(res),res,todo)
 
 
@@ -250,12 +311,12 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
 
     
     dat = {"A": A, "B": B, "pm_pixels": pm_pixels, "subsample": subsample, \
-        "cut_into": cut_into}
+        "cut_into": cut_into, "test_slit_data": True}
 
 
     todo = [(i,j,dat) for i in range(run) for j in range(run)]
     #res = list(map(xcor_frames_ascent_helper, todo))
-    #res = xcor_frames_ascent_helper((3,3,dat))
+    #res = xcor_frames_ascent_helper((2,2,dat))
     p = Pool()
     res = p.map(xcor_frames_ascent_helper, todo)
     p.close()
@@ -265,21 +326,26 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
 
     x_shifts = np.zeros((run,run))
     y_shifts = np.zeros((run,run))
+    best = np.zeros((run,run))
     x_shifts[:] = np.nan
     y_shifts[:] = np.nan
 
 
     Warnings = ""
+    #return (i,j,ndi.center_of_mass(res),res,shiftsize,"Success")
     for r in res:
-        x_shifts[r[0],r[1]] = r[2][0]
-        y_shifts[r[0],r[1]] = r[2][1]
-        if r[5] != "Success": 
+        i, j, com, res, shiftsize, todo = r
+        x_shifts[i,j] = com[0]
+        y_shifts[i,j] = com[1]
+        best[i,j] = np.nanmax(res)
+        if todo != "Success": 
             Warnings = "%s\n%s" % (Warnings, r[5])
-            x_shifts[r[0],r[1]] = np.nan
-            y_shifts[r[0],r[1]] = np.nan
+            x_shifts[i,j] = np.nan
+            y_shifts[i,j] = np.nan
+        #import IPython ; IPython.embed()
 
 
-    return x_shifts, y_shifts, Warnings
+    return x_shifts, y_shifts, best, Warnings
 
 
 
