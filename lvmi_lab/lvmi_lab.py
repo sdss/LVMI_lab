@@ -145,7 +145,7 @@ def get_slice(ijd):
     """ THe following is an ugly hack to deal with test slit data """
     qs = 4096//4
 
-    s1 = slice(150,190)
+    s1 = slice(220, 250)
     if (i==0) and (j==0):
         return (s1, slice(0,qs))
     if (i==1) and (j==0):
@@ -155,7 +155,7 @@ def get_slice(ijd):
     if (i==3) and (j==0):
         return (s1, slice(3*qs,4*qs))
 
-    s1 = slice(1000,1200)
+    s1 = slice(1082, 1120)
     if (i==0) and (j==1):
         return (s1, slice(0,qs))
     if (i==1) and (j==1):
@@ -166,7 +166,7 @@ def get_slice(ijd):
         return (s1, slice(3*qs,4*qs))
 
 
-    s1 = slice(1900,2300)
+    s1 = slice(2050, 2280)
     if (i==0) and (j==2):
         return (s1, slice(0,qs))
     if (i==1) and (j==2):
@@ -176,7 +176,7 @@ def get_slice(ijd):
     if (i==3) and (j==2):
         return (s1, slice(3*qs,4*qs))
 
-    s1 = slice(3800,4000)
+    s1 = slice(3870, 3905)
     if (i==0) and (j==3):
         return (s1, slice(0,qs))
     if (i==1) and (j==3):
@@ -213,14 +213,12 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
 
     i,j,data = ijd
     sl = get_slice(ijd)
-    #import IPython ; IPython.embed()
 
-    imshow(A[sl])
-    savefig("%s%s.png" % (i,j))
+    #imshow(A[sl])
+    #savefig("%s%s.png" % (i,j))
 
     stepsize = pm_pixels*2/(subsample-1)
-    shiftsize = np.arange(-pm_pixels, pm_pixels+stepsize, stepsize)
-
+    shiftsize = np.arange(-pm_pixels, pm_pixels+stepsize, stepsize) 
     res = np.zeros((subsample, subsample))
     res[:] = np.nan
 
@@ -238,10 +236,11 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
                 try: 
                     if not np.isfinite(res[ix,jx]):
                         a = shift_frame(A[sl], shiftsize[ix], shiftsize[jx])
-                        xcor = np.mean(a*B[sl])
+                        xcor = np.nanmean(a*B[sl])
                         res[ix, jx] = xcor
                 except IndexError:
-                    return (i,j,ndi.center_of_mass(res),res,shiftsize,"Hit Boundary")
+                    print("Hit")
+                    return (i,j,np.array([shiftsize[start_i],shiftsize[start_j]]),res,shiftsize,"Hit Boundary")
         
         r = np.nanargmax(res)
         start_i, start_j = np.unravel_index(r, res.shape)
@@ -252,7 +251,8 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     
 
     if niter >= iter_max:
-        return (i,j,ndi.center_of_mass(res),res,shiftsize,"Exceeded iteration limit")
+        print("Iter")
+        return (i,j,np.array([shiftsize[start_i], shiftsize[start_j]]),res,shiftsize,"Exceeded iteration limit")
 
     sl = slice(start_j-1,start_j+2)
     xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
@@ -340,8 +340,8 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
         best[i,j] = np.nanmax(res)
         if todo != "Success": 
             Warnings = "%s\n%s" % (Warnings, r[5])
-            x_shifts[i,j] = np.nan
-            y_shifts[i,j] = np.nan
+            #x_shifts[i,j] = np.nan
+            #y_shifts[i,j] = np.nan
         #import IPython ; IPython.embed()
 
 
