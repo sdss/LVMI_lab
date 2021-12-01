@@ -3,7 +3,9 @@
 import argparse
 import numpy as np
 
-from lvmi_lab import xcor_frames
+import colorama
+
+from lvmi_lab import xcor_frames, get_positions_on_ccd
 from astropy.io import fits
 
 
@@ -15,12 +17,15 @@ bpm_paths = {r1: "/home/npk/code/LVMI_lab/lvmi_lab/bpm-r1.fits",
 
 
 
+def color_pass(x):
+    c = colorama.Fore.GREEN if np.abs(x) < 0.2 else colorama.Fore.BLACK
+    return f'{c}{x:.1f}'
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Measure XCor of SH Pair')
     parser.add_argument('file1', type=str, nargs=1, help="File name")
     parser.add_argument('file2', type=str, nargs=1, help="File name")
-
 
 
     args = parser.parse_args()
@@ -55,6 +60,10 @@ if __name__ == "__main__":
     d1[bpm] = 0
     d2[bpm] = 0
         
+
+    #d1 -= np.median(d1)
+    #d2 -= np.median(d2)
+
     res = xcor_frames(d1, d2)
     #return x_shifts, y_shifts, best, Warnings
     x,y,best,warn = res
@@ -74,4 +83,33 @@ if __name__ == "__main__":
     print(np.array_str(y, precision=2))
 
     print(" X: %3.2f micron  Y: %3.2f micron" % (np.nanmedian(x), np.nanmedian(y)))
+
+    mX = x.copy()
+    mY = mX.copy()
+
+    dXs = np.array([get_positions_on_ccd(i,0)[1] for i in range(4)])/conv
+    dYs = np.array([get_positions_on_ccd(0,i)[0] for i in range(4)])/conv
+    print(dXs, dYs)
+
+    for i in range(4):
+        v = mX[i,:]
+        #vo = np.average(v)
+        #xo = np.average(dXs, weights=v)
+        vo = v[0] ; xo = dXs[0]
+        mX[i,:] = (v - vo)/(dXs-xo)
+
+    for i in range(4):
+        v = mY[:,i]
+        #vo = np.average(v)
+        #xo = np.average(dYs, weights=v)
+        vo = v[0] ; xo = dXs[0]
+        mY[:,i] = (v - vo)/(dYs-xo)
+
+
+    np.set_printoptions(precision=1,formatter={"float": color_pass})
+
+    print("X Slopes [mrad]")
+    print(np.array_str(mX, precision=1))
+    print("Y Slopes [mrad]")
+    print(np.array_str(mY, precision=1))
 

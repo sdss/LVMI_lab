@@ -130,6 +130,21 @@ def sincshift2d(image, dx, dy, sincrad=10, dampfac=3.25):
     newimage = convolve2d(image, kernel, mode='same')
     return newimage
 
+
+def get_positions_on_ccd(i, j):
+    """ Figure out the position of a slice (used to compute angles) """
+
+    data = {"test_slit_data": True}
+
+    slx, sly = get_slice((i,j,data))
+
+    def mns(sl):
+        return (sl.start + sl.stop)/2.
+
+    return mns(slx), mns(sly)
+
+
+
 def get_slice(ijd):
     """ Progrmmatically create slices """
     i,j,data = ijd
@@ -145,49 +160,47 @@ def get_slice(ijd):
     """ THe following is an ugly hack to deal with test slit data """
     qs = 4096//4
 
-    s1 = slice(220, 250)
+    s1 = slice(220, 260)
     if (i==0) and (j==0):
-        return (s1, slice(0,qs))
+        return (s1, slice(750,920))
     if (i==1) and (j==0):
-        return (s1, slice(qs,2*qs))
+        return (s1, slice(qs+250,qs+420))
     if (i==2) and (j==0):
-        return (s1, slice(2*qs,3*qs))
+        return (s1, slice(2*qs+300,2*qs+550))
     if (i==3) and (j==0):
         return (s1, slice(3*qs,4*qs))
 
-    s1 = slice(1082, 1120)
+    s1 = slice(1090, 1120)
     if (i==0) and (j==1):
-        return (s1, slice(0,qs))
+        return (s1, slice(780,945))
     if (i==1) and (j==1):
-        return (s1, slice(qs,2*qs))
+        return (s1, slice(qs+230,qs+400))
     if (i==2) and (j==1):
         return (s1, slice(2*qs,3*qs))
     if (i==3) and (j==1):
         return (s1, slice(3*qs,4*qs))
 
 
-    s1 = slice(2050, 2280)
+    s1 = slice(2050, 2290)
     if (i==0) and (j==2):
-        return (s1, slice(0,qs))
+        return (s1, slice(750,920))
     if (i==1) and (j==2):
-        return (s1, slice(qs,2*qs))
+        return (s1, slice(qs+250,qs+400))
     if (i==2) and (j==2):
         return (s1, slice(2*qs,3*qs))
     if (i==3) and (j==2):
         return (s1, slice(3*qs,4*qs))
 
-    s1 = slice(3870, 3905)
+    s1 = slice(3840, 3920)
     if (i==0) and (j==3):
-        return (s1, slice(0,qs))
+        return (slice(3860,3900), slice(760,930))
     if (i==1) and (j==3):
-        return (s1, slice(qs,2*qs))
+        return (s1, slice(qs+250,qs+400))
     if (i==2) and (j==3):
         return (s1, slice(2*qs,3*qs))
     if (i==3) and (j==3):
-        return (s1, slice(3*qs, 4*qs))
-
-
-
+        return (s1, slice(3*qs+300, 4*qs-200))
+0
 def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     """ Cross correlation - ascent algorithm - helper function 
     
@@ -214,8 +227,8 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     i,j,data = ijd
     sl = get_slice(ijd)
 
-    #imshow(A[sl])
-    #savefig("%s%s.png" % (i,j))
+    A[sl] /= np.max(A[sl])
+    B[sl] /= np.max(B[sl])
 
     stepsize = pm_pixels*2/(subsample-1)
     shiftsize = np.arange(-pm_pixels, pm_pixels+stepsize, stepsize) 
@@ -229,7 +242,7 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
     niter = 0
 
     while (improvement > threshold) and (niter < iter_max):
-        for di in [-1,0,1]:
+        for di in [0]:
             for dj in [-1,0,1]:
                 ix = di + start_i
                 jx = dj + start_j
@@ -248,17 +261,26 @@ def xcor_frames_ascent_helper(ijd, threshold=0, iter_max=500):
         improvement = res[start_i,start_j] - prev
         prev = res[start_i,start_j]
         niter += 1
-    
+
 
     if niter >= iter_max:
         print("Iter")
         return (i,j,np.array([shiftsize[start_i], shiftsize[start_j]]),res,shiftsize,"Exceeded iteration limit")
 
+
+    SL = sl
     sl = slice(start_j-1,start_j+2)
     xcom = np.nansum(res[start_i,sl] * shiftsize[sl])/np.nansum(res[start_i,sl])
     sl = slice(start_i-1,start_i+2)
     ycom = np.nansum(res[sl,start_j] * shiftsize[sl])/np.nansum(res[sl,start_j])
+
+    imshow(a-B[SL])
+    title("X: %1.3f Y: %1.3f" % (xcom, ycom))
+    savefig("%s%s.png" % (i,j))
     
+    #if (i==1) and (j==1):
+        #import IPython ; IPython.embed()
+
     return (i,j,np.array([xcom, ycom]),res,shiftsize,"Success")
 
 def xcor_frames_helper(ijd):
@@ -282,7 +304,7 @@ def xcor_frames_helper(ijd):
     return (i,j,ndi.center_of_mass(res),res,todo)
 
 
-def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
+def xcor_frames(A, B, pm_pixels=4.0, subsample=700, cut_into=1024):
     """ Return the spatial cross correlation of two frames over +-pm_pixes
 
     Based on simulations, we want a precision of 0.02 pixels (50 subsamples)
@@ -335,9 +357,9 @@ def xcor_frames(A, B, pm_pixels=1.0, subsample=200, cut_into=1024):
     #return (i,j,ndi.center_of_mass(res),res,shiftsize,"Success")
     for r in res:
         i, j, com, res, shiftsize, todo = r
-        x_shifts[i,j] = com[0]
-        y_shifts[i,j] = com[1]
-        best[i,j] = np.nanmax(res)
+        x_shifts[j,i] = com[0]
+        y_shifts[j,i] = com[1]
+        best[j,i] = np.nanmax(res)
         if todo != "Success": 
             Warnings = "%s\n%s" % (Warnings, r[5])
             #x_shifts[i,j] = np.nan

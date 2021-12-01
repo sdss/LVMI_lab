@@ -4,7 +4,6 @@
 import numpy as np
 from astropy.io import fits
 import argparse
-import ccdproc
 from astropy.nddata import CCDData
 
 
@@ -18,11 +17,10 @@ if __name__ == "__main__":
 
     for file in args.files:
         ff = fits.open(file)
-        dats.append(CCDData(ff[0].data, unit='adu'))
+        dats.append(ff[0].data)
     
-    c = ccdproc.Combiner(dats)
 
-    ff[0].data = c.median_combine()
+    ff[0].data = np.median(dats, 0)
 
     ff.writeto("med.fits")
     
