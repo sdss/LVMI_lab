@@ -23,11 +23,11 @@ Setup aliases etc..
 ## bias subtract
 `~npk/code/LVMI_lab/lvmi_lab/bias_subtract.py *gz` 
 
-# Note, you can bias subtract on individual files, or individual channels. Say you want to do infrare:
-~npk/code/LVMI_lab/lvmi_lab/bias_subtract.py *z1*gz
+### Note, you can bias subtract on individual files, or individual channels. Say you want to do infrared only:
+`~npk/code/LVMI_lab/lvmi_lab/bias_subtract.py *z1*gz`
 
 
-## To compare two files
+## To assess focus between two files
 `~npk/code/LVMI_lab/lvmi_lab/sh_pair.py bs_sdR-s-z1-00001042.fits bs_sdR-s-z1-00001041.fits`
 
 This will spit out three matrices. The first tells you how good the xcor is. The second is the X shift, the third is the Y shift (ignore this one, it will always be 0.34 micron). Units are in µm of focus shift that would lead to this amount of offset in pixel space (if you're off by 0.2 pixels that's 12 µm of defocus, according to my calculations).
