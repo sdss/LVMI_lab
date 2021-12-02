@@ -68,6 +68,10 @@ if __name__ == "__main__":
     #return x_shifts, y_shifts, best, Warnings
     x,y,best,warn = res
 
+    x = np.flip(x, 0)
+    y = np.flip(y, 0)
+    best = np.flip(best, 0)
+
     conv = 12/.2 # micron / pix
     x *= conv
     y *= conv
@@ -102,14 +106,14 @@ if __name__ == "__main__":
         v = mY[:,i]
         #vo = np.average(v)
         #xo = np.average(dYs, weights=v)
-        vo = v[0] ; xo = dXs[0]
+        vo = v[-1] ; xo = dXs[-1]
         mY[:,i] = (v - vo)/(dYs-xo)
 
 
     np.set_printoptions(precision=1,formatter={"float": color_pass})
 
-    print("X Slopes [mrad]")
-    print(np.array_str(mX, precision=1))
-    print("Y Slopes [mrad]")
+    print("X Tilt [mrad]")
     print(np.array_str(mY, precision=1))
+    print("Y Tilt [mrad]")
+    print(np.array_str(mX, precision=1))
 
