@@ -31,7 +31,7 @@ To compare two files
 ~npk/code/LVMI_lab/lvmi_lab/sh_pair.py bs_sdR-s-z1-00001042.fits bs_sdR-s-z1-00001041.fits
 
 This will spit out three matrices. The first tells you how good the xcor is. The second is the X shift, the third is the Y shift (ignore this one, it will always be 0.34 micron). Units are in µm of focus shift that would lead to this amount of offset in pixel space (if you're off by 0.2 pixels that's 12 µm of defocus, according to my calculations).
-
+```
 X Array [micron]
 [[-60.77 -60.77 -56.65 -66.95]
  [ -3.09   2.4    4.46  -9.27]
@@ -53,7 +53,7 @@ Y Tilt [mrad]
  [nan 0.6 0.3 -0.1]
  [nan -0.1 -0.1 -0.2]
  [nan -0.7 -0.4 -0.2]]
-
+```
 
 Look at the "X Array" This is the total amount of defocus across the device. You want to get rows 2,3, and 4 to be below 10 microns. Now look at the X tilt and Y tilt. These are the tilts in accordance with the drawing that you made. Call me if you need any further help.
 
