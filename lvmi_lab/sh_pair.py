@@ -3,9 +3,8 @@
 import argparse
 import numpy as np
 
-import colorama
 
-from lvmi_lab import xcor_frames, get_positions_on_ccd
+from lvmi_lab import xcor_frames, get_positions_on_ccd, hartman_focus_by_peak_finding
 from astropy.io import fits
 
 
@@ -16,10 +15,6 @@ bpm_paths = {r1: "/home/npk/code/LVMI_lab/lvmi_lab/bpm-r1.fits",
              z1: "/home/npk/code/LVMI_lab/lvmi_lab/bpm-z1.fits"}
 
 
-
-def color_pass(x):
-    c = colorama.Fore.GREEN if np.abs(x) < 0.2 else colorama.Fore.BLACK
-    return f'{c}{x:.1f}'
 
 if __name__ == "__main__":
 
@@ -32,9 +27,12 @@ if __name__ == "__main__":
 
     print(args)
 
-    print(args.file1, args.file2)
-    hdu1 = fits.open(args.file1[0])
-    hdu2 = fits.open(args.file2[0])
+    f1 = args.file1[0]
+    f2 = args.file2[0]
+    print(f1,f2)
+
+    hdu1 = fits.open(f1)
+    hdu2 = fits.open(f2)
 
     if hdu1[0].header["HARTMANN"] != '1 0':
         print("LEFT IS NOT LEFT!!! -- LIKELY SIGN IS WRONG!!!")
@@ -44,6 +42,31 @@ if __name__ == "__main__":
     
     d1 = hdu1[0].data
     d2 = hdu2[0].data
+
+    tl, tr, ox, oy = hartman_focus_by_peak_finding(d1,d2)
+    x,y = tl.data.T[0], tl.data.T[1]
+    ox *= 12/.2
+
+    from pylab import *
+    l,r = map(lambda x: x.rstrip(".fits").split("-")[-1], [f1,f2])
+    flav = f1.split("-")[2]
+
+    fig = figure(figsize=(12,6))
+    subplot(2,2,1)
+    scatter(x,y,c=ox) ; colorbar()
+    title("%s: %s/%s" % (flav, l, r))
+    subplot(2,2,2)
+    plot(ox, y,'.') ; grid(True)
+    axvline(np.median(ox))
+    xlabel("Defocus [micron]")
+    subplot(2,2,3)
+    plot(x, ox,'.') ; grid(True)
+    axhline(np.median(ox))
+    ylabel("Defocus [micron]")
+
+
+    savefig("%s-%s-%s-fig.pdf" % (flav,l,r))
+
     
     bpm = []
     if True:
@@ -109,8 +132,6 @@ if __name__ == "__main__":
         vo = v[-1] ; xo = dXs[-1]
         mY[:,i] = (v - vo)/(dYs-xo)
 
-
-    np.set_printoptions(precision=1,formatter={"float": color_pass})
 
     print("X Tilt [mrad]")
     print(np.array_str(mY, precision=1))

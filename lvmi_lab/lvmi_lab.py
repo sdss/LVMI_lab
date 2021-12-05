@@ -3,10 +3,13 @@ import numpy.random
 import astropy.io.fits as fits
 from scipy import ndimage as ndi
 from scipy.signal import convolve, convolve2d
+from scipy.spatial.kdtree import KDTree as KDT
 
 from multiprocessing import Pool
 
 from pylab import *
+import photutils
+from photutils import DAOStarFinder
 
 
 def generate_fake_frame(RN=3, gain=2, n_pix=4096, adc_bits=16, add=0,
@@ -157,6 +160,7 @@ def get_slice(ijd):
         return sl
 
 
+
     """ THe following is an ugly hack to deal with test slit data """
     qs = 4096//4
 
@@ -193,7 +197,7 @@ def get_slice(ijd):
 
     s1 = slice(3840, 3920)
     if (i==0) and (j==3):
-        return (slice(3860,3900), slice(760,930))
+        return (slice(3855,3925), slice(760,930))
     if (i==1) and (j==3):
         return (s1, slice(qs+250,qs+400))
     if (i==2) and (j==3):
@@ -374,5 +378,28 @@ def xcor_frames(A, B, pm_pixels=4.0, subsample=700, cut_into=1024):
 
 
 
+def hartman_focus_by_peak_finding(dataleft, dataright, fwhm_pix=4, threshold=4000):
+    
+    daofind = DAOStarFinder(fwhm=fwhm_pix, threshold=threshold)
+    xc = "xcentroid"
+    yc = "ycentroid"
 
+    s_l = daofind(dataleft)
+    s_r = daofind(dataright)
 
+    pos_l = np.transpose((s_l[xc], s_l[yc]))
+    pos_r = np.transpose((s_r[xc], s_r[yc]))
+
+    tl = KDT(pos_l)
+    tr = KDT(pos_r)
+
+    offsets_x = [] ; offsets_y = []
+    for point in tl.data:
+        _, ix = tr.query(point)
+        dx = point[0] - tr.data[ix][0]
+        dy = point[1] - tr.data[ix][1]
+
+        offsets_x.append(dx)
+        offsets_y.append(dy)
+
+    return tl,tr,np.array(offsets_x),np.array(offsets_y)
