@@ -1,5 +1,7 @@
 # LVMI_lab
- LVM-I Laboratory Work 
+ LVM-I Hartmann door and bias subtraction code.
+ 
+ We've implemented two approaches to assessing focus via the Hartmann method. The code below will execute both.
 
 ## LOGIN
 ssh as yourself into the server:
@@ -27,9 +29,21 @@ Setup aliases etc..
 `~npk/code/LVMI_lab/lvmi_lab/bias_subtract.py *z1*gz`
 
 
-## To assess focus between two files
+## To assess focus between two files 
 `~npk/code/LVMI_lab/lvmi_lab/sh_pair.py bs_sdR-s-z1-00001042.fits bs_sdR-s-z1-00001041.fits`
 
+The code will automatically determine focus using two independent methods.
+
+### DAOPhot Method
+The code uses DAOphot to find PSFs, and will measure the distance between pairs of emission lines using the DAOPhot centroiding algorithm. It spits out a PDF file that plots three graphs that are stored as a PDF file in the directory that the software is run. The code finds arclamp emission lines that are about 3.5 pix FWHM and meet a very strict threshold criteria. The location of these emission lines is shown in top left of the plot. In the example below one sees the spectral smile of lines of iso-wavelength. The points are colored coded by the amount of defocus of that emission line (expressed in microns). The data are then represented as a function of X versus defocus and Y versus defocus. In both plots either a vertical or horizontal blue line shows the median amount of defocus.
+
+
+![image](https://user-images.githubusercontent.com/3804541/144768164-98d30d09-c2de-4cdd-917d-55b953b07291.png)
+
+
+
+
+### Cross Correlation Output
 This will spit out three matrices. The first tells you how good the xcor is. The second is the X shift, the third is the Y shift (ignore this one, it will always be 0.34 micron). Units are in µm of focus shift that would lead to this amount of offset in pixel space (if you're off by 0.2 pixels that's 12 µm of defocus, according to my calculations).
 
 ```
@@ -57,6 +71,8 @@ Y Tilt [mrad]
 ```
 
 Look at the "X Array" This is the total amount of defocus across the device. You want to get rows 2,3, and 4 to be below 10 microns. Now look at the X tilt and Y tilt. These are the tilts in accordance with the drawing that you made. Call me if you need any further help.
+
+
 
 
 ## lvmi_lab
