@@ -402,4 +402,5 @@ def hartman_focus_by_peak_finding(dataleft, dataright, fwhm_pix=4, threshold=400
         offsets_x.append(dx)
         offsets_y.append(dy)
 
+
     return tl,tr,np.array(offsets_x),np.array(offsets_y)

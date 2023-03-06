@@ -39,13 +39,12 @@ if __name__ == "__main__":
     if hdu2[0].header["HARTMANN"] != '0 1':
         print("RIGHT IS NOT RIGHT -- LIKELY SIGN IS WRONG!!!")
         
-    
     d1 = hdu1[0].data
     d2 = hdu2[0].data
 
     tl, tr, ox, oy = hartman_focus_by_peak_finding(d1,d2)
     x,y = tl.data.T[0], tl.data.T[1]
-    ox *= 12/.2
+    ox *= -12/.2
 
     from pylab import *
     l,r = map(lambda x: x.rstrip(".fits").split("-")[-1], [f1,f2])
@@ -54,20 +53,27 @@ if __name__ == "__main__":
     fig = figure(figsize=(12,6))
     subplot(2,2,1)
     scatter(x,y,c=ox) ; colorbar()
+    clim(-60,60)
     title("%s: %s/%s" % (flav, l, r))
     subplot(2,2,2)
     plot(ox, y,'.') ; grid(True)
     axvline(np.median(ox))
     xlabel("Defocus [micron]")
+    xlim(-60,60)
     subplot(2,2,3)
     plot(x, ox,'.') ; grid(True)
     axhline(np.median(ox))
     ylabel("Defocus [micron]")
+    ylim(-60,60)
+
 
 
     savefig("%s-%s-%s-fig.pdf" % (flav,l,r))
 
     
+    import sys
+    sys.exit()
+
     bpm = []
     if True:
         if r1 in args.file1[0]:

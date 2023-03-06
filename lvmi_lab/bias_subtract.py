@@ -4,6 +4,7 @@ import numpy as np
 from astropy.io import fits
 import argparse
 
+
 def floatcompress(data, ndig=12):
     '''Adapted from Finkbeiner IDL routine floatcompress'''
 
@@ -28,8 +29,8 @@ def subtract_overscan(dat):
 
 
 
-    os1 = np.mean(dat[:,2040:2060], axis=1)
-    os2 = np.mean(dat[:,2061:2080], axis=1)
+    os1 = np.mean(dat[:,2044:2060], axis=1)
+    os2 = np.mean(dat[:,2061:2077], axis=1)
 
     A = np.tile(os1, (2040,1))
     B = np.tile(os2, (2040,1))
@@ -56,6 +57,7 @@ if __name__ == "__main__":
 
 
     for file in args.files:
+        print(file)
         hdus = fits.open(file)
         dat = hdus[0].data
         res = subtract_overscan(dat)
