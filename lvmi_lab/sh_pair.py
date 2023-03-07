@@ -60,15 +60,23 @@ if __name__ == "__main__":
     axvline(np.median(ox))
     xlabel("Defocus [micron]")
     xlim(-60,60)
+    title("Red: Rotate pattern Clockwise is -Y  Blue/NIR: Clockwise is -Y")
+    ylabel("Adjust Theta Y")
     subplot(2,2,3)
     plot(x, ox,'.') ; grid(True)
     axhline(np.median(ox))
+    xlabel("Adjust Theta X")
     ylabel("Defocus [micron]")
     ylim(-60,60)
 
 
 
-    savefig("%s-%s-%s-fig.pdf" % (flav,l,r))
+    outname = "%s-%s-%s-fig.pdf" % (flav,l,r)
+    savefig(outname)
+
+    import os
+    os.system("open %s" % outname)
+    os.system("ds9 %s -zscale %s -zscale -single &" % (f1, f2))
 
     
     import sys
