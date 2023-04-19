@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     hdua = fits.open(args.a)
     hdub = fits.open(args.b)
-    dat = hdua[0].data.astype(np.float) - hdub[0].data.astype(np.float)
+    dat = (hdua[0].data.astype(np.float) - hdub[0].data.astype(np.float)).astype(np.float)
 
     hdus = fits.PrimaryHDU(dat)
 
