@@ -24,13 +24,19 @@ def floatcompress(data, ndig=12):
     return out
 
 
-def subtract_overscan(dat):
+def subtract_overscan(dat, kernel_size=5):
     """ Subtract LVM overscan """
 
 
 
-    os1 = np.mean(dat[:,2044:2060], axis=1)
-    os2 = np.mean(dat[:,2061:2077], axis=1)
+    kernel = np.ones(kernel_size)/kernel_size
+
+    
+    data1 = np.mean(dat[:,2044:2060], axis=1)
+    data2 = np.mean(dat[:,2061:2077], axis=1)
+
+    os1 = np.convolve(data1, kernel, mode='same')
+    os2 = np.convolve(data2, kernel, mode='same')
 
     A = np.tile(os1, (2040,1))
     B = np.tile(os2, (2040,1))
