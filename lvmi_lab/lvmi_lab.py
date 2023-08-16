@@ -378,7 +378,7 @@ def xcor_frames(A, B, pm_pixels=4.0, subsample=700, cut_into=1024):
 
 
 
-def hartman_focus_by_peak_finding(dataleft, dataright, fwhm_pix=3.5, threshold=3000):
+def hartman_focus_by_peak_finding(dataleft, dataright, fwhm_pix=3.5, threshold=800):
     
     daofind = DAOStarFinder(fwhm=fwhm_pix, threshold=threshold)
     xc = "xcentroid"
