@@ -7,7 +7,7 @@ authors = ["Nick Konidaris <npk@carnegiescience.edu>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "^1.20.1"
-astropy = "^4.2"
+astropy = "^5.0"
 scipy = "^1.6.1"
 
 [tool.poetry.dev-dependencies]
