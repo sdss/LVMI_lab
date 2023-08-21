@@ -9,7 +9,8 @@
 Installation instructions
 - pyenv virtualenv 3.11.3 lvm-focus
 - pyenv shell lvm-focus
-- pip install -e lvmi_lab
+- cd /to/the/path
+- pip install -e .
 
 # Carnegie Details
 ## LOGIN
