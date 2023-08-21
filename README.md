@@ -3,6 +3,15 @@
  
  We've implemented two approaches to assessing focus via the Hartmann method. The code below will execute both.
 
+
+# lvm-hub details
+
+Installation instructions
+- pyenv virtualenv 3.11.3 lvm-focus
+- pyenv shell lvm-focus
+- pip install -e lvmi_lab
+
+# Carnegie Details
 ## LOGIN
 ssh as yourself into the server:
 ssh XXXXXXXXXXXXXX (ask Nick or Pavan for IP)
