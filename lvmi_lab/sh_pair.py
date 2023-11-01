@@ -2,10 +2,26 @@
 
 import argparse
 import numpy as np
+import json
 
 
 from lvmi_lab import xcor_frames, get_positions_on_ccd, hartman_focus_by_peak_finding
 from astropy.io import fits
+
+
+from sklearn.linear_model import HuberRegressor
+
+
+
+def regress(x, y):
+    """ Returns a linear fitting function """
+    X = np.zeros((x.shape[0],1))
+    X[:,0] = x
+    huber = HuberRegressor(epsilon=1)
+    huber.fit(X,y)
+
+    return np.poly1d([huber.coef_[0], huber.intercept_])
+
 
 
 r1 = "r1"
@@ -39,6 +55,7 @@ if __name__ == "__main__":
     if hdu2[0].header["HARTMANN"] != '0 1':
         print("RIGHT IS NOT RIGHT -- LIKELY SIGN IS WRONG!!!")
         
+    OBSTIME = hdu1[0].header["OBSTIME"]
     d1 = hdu1[0].data
     d2 = hdu2[0].data
 
@@ -48,107 +65,73 @@ if __name__ == "__main__":
 
     from pylab import *
     l,r = map(lambda x: x.rstrip(".fits").split("-")[-1], [f1,f2])
-    flav = f1.split("-")[2]
+    flav = f1.split("/")[-1].split("-")[2]
+    framenum = l.split(".")[0]
 
     fig = figure(figsize=(12,6))
     subplot(2,2,1)
     scatter(x,y,c=ox) ; colorbar()
     clim(-60,60)
     title("%s: %s/%s" % (flav, l, r))
+    
+
+    lims = [-80,80]
+    #### TOP RIGHT
     subplot(2,2,2)
-    plot(ox, y,'.') ; grid(True)
-    axvline(np.median(ox))
-    xlabel("Defocus [micron]")
-    xlim(-60,60)
-    title("Red: Rotate pattern Clockwise is -Y  Blue/NIR: Clockwise is -Y")
-    ylabel("Adjust Theta Y")
-    subplot(2,2,3)
-    plot(x, ox,'.') ; grid(True)
+    XR = np.arange(0,4096,300)
+    plot(y, ox, '.') ; grid(True)
+    reg = regress(y, ox)
+    plot(XR, reg(XR), lw=3)
     axhline(np.median(ox))
-    xlabel("Adjust Theta X")
+    xlabel("Defocus [micron]")
+    title("Y Slope is %3.1f [µm/4096 pix]" % (reg.coef[0]*4096))
+    yslope = reg.coef[0] * 4096
+    ylim(*lims)
+
+
+    ##### BOTTOM LEFT
+    subplot(2,2,3)
+    XR = np.arange(0,4096,300)
+    plot(x, ox,'.') ; grid(True)
+    reg = regress(x, ox)
+    plot(XR, reg(XR), lw=3)
+    axhline(np.median(ox))
+    title("X Slope is %3.1f [µm/4096 pix]" % (reg.coef[0]*4096))
+    xslope = reg.coef[0]*4096
+
     ylabel("Defocus [micron]")
-    ylim(-60,60)
+    ylim(*lims)
 
 
+    subplot(2,2,4)
+    hist(ox, range=[-30,30], bins=50)
+    xlabel("Defocus [µm]")
+    q10,q50,q90 = np.quantile(ox, [0.1, 0.5, 0.9])
+    title("90percent within %3.1f to %3.1f" % (q10,q90))
 
-    outname = "%s-%s-%s-fig.pdf" % (flav,l,r)
+
+    tight_layout()
+    outname = "/Users/npk/Dropbox/REPOS/LVM-focus-measurements/results/%s-%s-%s-fig.pdf" % (flav,l,r)
+    print( "*I***")
+    print(outname)
     savefig(outname)
 
     import os
-    os.system("open %s" % outname)
-    os.system("ds9 %s -zscale %s -zscale -single &" % (f1, f2))
+    #os.system("open %s" % outname)
+    #os.system("ds9 %s -zscale %s -zscale -single &" % (f1, f2))
+
+    fname = "/Users/npk/Dropbox/REPOS/LVM-focus-measurements/results/results.json"
+    try:
+        with open(fname, 'r') as f:
+            all_results = json.load(f)
+    except FileNotFoundError:
+        all_results = {}
+    
+    key = "%s-%s" % (framenum, flav)
+    all_results[key] = [OBSTIME, xslope, yslope, q10, q50, q90]
+    print(all_results)
+
+    with open(fname, "w") as f:
+        json.dump(all_results, f)
 
     
-    import sys
-    sys.exit()
-
-    bpm = []
-    if True:
-        if r1 in args.file1[0]:
-            print("Using BPM: %s" % bpm_paths[r1])
-            bpm = fits.open(bpm_paths[r1])[0].data
-            bpm = np.where(bpm==1)
-
-        if z1 in args.file1[0]:
-            print("Using BPM: %s" % bpm_paths[z1])
-            bpm = fits.open(bpm_paths[z1])[0].data
-            bpm = np.where(bpm==1)
-    
-    d1[bpm] = 0
-    d2[bpm] = 0
-        
-
-    #d1 -= np.median(d1)
-    #d2 -= np.median(d2)
-
-    res = xcor_frames(d1, d2)
-    #return x_shifts, y_shifts, best, Warnings
-    x,y,best,warn = res
-
-    x = np.flip(x, 0)
-    y = np.flip(y, 0)
-    best = np.flip(best, 0)
-
-    conv = 12/.2 # micron / pix
-    x *= conv
-    y *= conv
-    print("values")
-    best /= np.nanmax(best)
-    print(np.array_str(best,precision=2))
-    bad = best < 1e-4
-    x[bad] = np.nan
-    y[bad] = np.nan
-    print("X Array [micron]")
-    print(np.array_str(x, precision=2))
-    print("Y Array [micron]")
-    print(np.array_str(y, precision=2))
-
-    print(" X: %3.2f micron  Y: %3.2f micron" % (np.nanmedian(x), np.nanmedian(y)))
-
-    mX = x.copy()
-    mY = mX.copy()
-
-    dXs = np.array([get_positions_on_ccd(i,0)[1] for i in range(4)])/conv
-    dYs = np.array([get_positions_on_ccd(0,i)[0] for i in range(4)])/conv
-    print(dXs, dYs)
-
-    for i in range(4):
-        v = mX[i,:]
-        #vo = np.average(v)
-        #xo = np.average(dXs, weights=v)
-        vo = v[0] ; xo = dXs[0]
-        mX[i,:] = (v - vo)/(dXs-xo)
-
-    for i in range(4):
-        v = mY[:,i]
-        #vo = np.average(v)
-        #xo = np.average(dYs, weights=v)
-        vo = v[-1] ; xo = dXs[-1]
-        mY[:,i] = (v - vo)/(dYs-xo)
-
-
-    print("X Tilt [mrad]")
-    print(np.array_str(mY, precision=1))
-    print("Y Tilt [mrad]")
-    print(np.array_str(mX, precision=1))
-

@@ -12,6 +12,7 @@ import photutils
 from photutils import DAOStarFinder
 
 
+
 def generate_fake_frame(RN=3, gain=2, n_pix=4096, adc_bits=16, add=0,
     header_add={}):
     """ Return simulated HDU Frame
@@ -380,7 +381,8 @@ def xcor_frames(A, B, pm_pixels=4.0, subsample=700, cut_into=1024):
 
 def hartman_focus_by_peak_finding(dataleft, dataright, fwhm_pix=3.0, threshold=800):
     
-    print("Threshold is: %i, fwhm is %f" % (threshold, fwhm_pix)) ; daofind = DAOStarFinder(fwhm=fwhm_pix, threshold=threshold)
+    print("Threshold is: %i, fwhm is %f" % (threshold, fwhm_pix)) ; 
+    daofind = DAOStarFinder(fwhm=fwhm_pix, threshold=threshold, peakmax=60000.)
     xc = "xcentroid"
     yc = "ycentroid"
 
